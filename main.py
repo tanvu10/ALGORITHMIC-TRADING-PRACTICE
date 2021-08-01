@@ -6,7 +6,7 @@ import os
 os.chdir('D:/data-vietquant/daily')
 
 
-AAA = pd.read_csv("VIC.csv")
+AAA = pd.read_csv("VNM.csv")
 AAA['Date'] = [i.split(' ')[0][:] for i in AAA['Date']]
 AAA['Date'] = AAA['Date'].apply(pd.Timestamp) #very important: convert string to date
 
@@ -113,3 +113,57 @@ plt.show()
 
 
 #building FAST AND SLOW EMA
+#FAST EMA:
+fast_num = 10
+mu_fast = 2/(fast_num+1)
+EMA_fast_list = []
+old_fast_EMA = 0
+#slow EMA
+slow_num  = 23
+mu_slow = 2/(slow_num+1)
+EMA_slow_list = []
+old_slow_EMA = 0
+
+APO = []
+
+AAA_price = pd.DataFrame(index = AAA.index)
+AAA_price['Price'] = AAA['Close']
+
+
+for price in AAA_price['Price']:
+    #fast EMA:
+    if old_fast_EMA == 0:
+        old_fast_EMA = price
+        EMA_fast_list.append(old_fast_EMA)
+    else:
+        old_fast_EMA = (price- old_fast_EMA)*mu_fast + old_fast_EMA
+        EMA_fast_list.append(old_fast_EMA)
+    #slow EMA
+    if old_slow_EMA == 0:
+        old_slow_EMA = price
+        EMA_slow_list.append(old_slow_EMA)
+    else:
+        old_slow_EMA = (price - old_slow_EMA)*mu_slow +old_slow_EMA
+        EMA_slow_list.append(old_slow_EMA)
+    #APO
+    dif = old_fast_EMA - old_slow_EMA
+    APO.append(dif)
+
+AAA_price['FEMA'] = EMA_fast_list
+AAA_price['SEMA'] = EMA_slow_list
+AAA_price['APO'] = APO
+
+print(AAA_price)
+
+fig = plt.figure()
+ax1 = fig.add_subplot(211, ylabel = 'AAA prices')
+AAA_price['Price'].plot(ax = ax1,lw=2, color= 'g', legend = True)
+AAA_price['FEMA'].plot(ax = ax1,lw=2 , color= 'b', legend= True)
+AAA_price['SEMA'].plot(ax = ax1,lw= 2, color = 'r', legend = True)
+ax2 = fig.add_subplot(212, ylabel= 'Absolute price oscillator')
+AAA_price['APO'].plot(ax = ax2, lw= 2 , color= 'black', legend= True)
+plt.axhline( linewidth=2,color='b',y= 0,linestyle=':')
+plt.show()
+
+print(APO)
+
