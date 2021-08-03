@@ -3,19 +3,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 # if __name__ == "__main__":
 import os
-os.chdir('D:/data-vietquant/daily')
+os.chdir('D:/data-vietquant')
 
 
-AAA = pd.read_csv("HT1.csv")
+AAA = pd.read_csv("DRC.csv")
 AAA['Date'] = [i.split(' ')[0][:] for i in AAA['Date']]
 AAA['Date'] = AAA['Date'].apply(pd.Timestamp) #very important: convert string to date
 
 AAA = AAA.set_index(['Date'], inplace = False)
-start_date = '2020-01-01'
-end_date = '2021-07-30'
-
-AAA_data = AAA[start_date: (end_date)]
-print(AAA_data[10:20])
+start_date = '2020-02-10'
+end_date = '2021-02-08'
+print(AAA)
+AAA_data = AAA[start_date::]
+print(AAA_data["Close"])
 
 Lows = AAA_data['Low']
 Highs = AAA_data['High']
@@ -113,12 +113,12 @@ plt.show()
 
 #building FAST AND SLOW EMA
 #FAST EMA:
-fast_num = 20
+fast_num = 10
 mu_fast = 2/(fast_num+1)
 EMA_fast_list = []
 old_fast_EMA = 0
 #slow EMA
-slow_num  = 50
+slow_num  = 20
 mu_slow = 2/(slow_num+1)
 EMA_slow_list = []
 old_slow_EMA = 0
@@ -128,13 +128,13 @@ old_slow_EMA = 0
 MACD_list = []
 
 #EMA_MACD_fast:
-EMA_fMACD_num = 15
+EMA_fMACD_num = 10
 mu_fMACD = 2 / (EMA_fMACD_num + 1)
 EMA_fMACD_list = []
 EMA_fMACD_value = 0
 
 #EMA_MACD_slow:
-EMA_sMACD_num = 20
+EMA_sMACD_num = 10
 mu_sMACD = 2 / (EMA_sMACD_num +1)
 EMA_sMACD_list = []
 EMA_sMACD_value = 0
@@ -142,11 +142,6 @@ EMA_sMACD_value = 0
 
 #MACD_hist:
 MACD_hist =[]
-
-
-#MACD_lv2
-MACD_lv2_hist =[]
-
 
 AAA_price = pd.DataFrame(index = AAA_data.index)
 AAA_price['Price'] = AAA_data['Close']
@@ -171,6 +166,14 @@ for price in AAA_price['Price']:
     MACD = old_fast_EMA - old_slow_EMA #MACD
     MACD_list.append(MACD)
 
+    #EMA_fMACD:
+    if EMA_fMACD_value == 0:
+        EMA_fMACD_value = MACD
+        EMA_fMACD_list.append(EMA_fMACD_value)
+    else:
+        EMA_fMACD_value = (MACD - EMA_fMACD_value) * mu_fMACD + EMA_fMACD_value
+        EMA_fMACD_list.append(EMA_fMACD_value)
+
     #EMA_sMACD:
     if EMA_sMACD_value == 0:
         EMA_sMACD_value = MACD
@@ -183,26 +186,12 @@ for price in AAA_price['Price']:
     hist  = MACD - EMA_sMACD_value
     MACD_hist.append(hist)
 
-
-    #EMA_fMACD:
-    if EMA_fMACD_value == 0:
-        EMA_fMACD_value = hist
-        EMA_fMACD_list.append(EMA_fMACD_value)
-    else:
-        EMA_fMACD_value =(hist - EMA_fMACD_value) * mu_fMACD + EMA_fMACD_value
-        EMA_fMACD_list.append(EMA_fMACD_value)
-
-    MACD_l2 = hist - EMA_fMACD_value
-    MACD_lv2_hist.append(MACD_l2)
-
-
 AAA_price['FEMA'] = EMA_fast_list
 AAA_price['SEMA'] = EMA_slow_list
 AAA_price['MACD'] = MACD_list
 AAA_price['EMA_fMACD'] = EMA_fMACD_list
 AAA_price['EMA_sMACD'] = EMA_sMACD_list
 AAA_price['MACD_hist'] = MACD_hist
-AAA_price['MACD_lv2_hist'] = MACD_lv2_hist
 print(AAA_price)
 
 
@@ -213,7 +202,7 @@ def EMA_MACD_algorithm(data):
     for x in range(len(data)):
         if data['MACD'][x] > 0:
             data['long_signal'][x] = 1
-        elif (data['MACD'][x] - 100) < 0:
+        elif (data['MACD'][x]) < 0:
             data['long_signal'][x] = 0
         else:
             data['long_signal'][x] = data['long_signal'][x-1]
@@ -221,9 +210,9 @@ def EMA_MACD_algorithm(data):
 
     data['short_signal'] = np.zeros(len(data))
     for x in range(len(data)):
-        if data['MACD_lv2_hist'][x] > 0:
+        if data['MACD_hist'][x] > 0:
             data['short_signal'][x] = 1
-        elif data['MACD_lv2_hist'][x] < 0:
+        elif data['MACD_hist'][x] < 0:
             data['short_signal'][x] = 0
         else:
             data['short_signal'][x] = data['short_signal'][x - 1]
@@ -231,6 +220,7 @@ def EMA_MACD_algorithm(data):
 
 
 EMA_MACD_algorithm(AAA_price)
+print(AAA_price)
 # print(AAA_price['2021-01-20':'2021-01-25'])
 fig = plt.figure()
 ax1 = fig.add_subplot(311, ylabel = 'AAA prices')
@@ -242,11 +232,12 @@ ax1.plot(AAA_price.loc[(AAA_price.short_position == 1)].index\
 ax1.plot(AAA_price.loc[AAA_price.short_position == -1].index\
         ,AAA_price.Price[AAA_price.short_position == -1], 'v', markersize = 7, label= 'sell' )
 ax2 = fig.add_subplot(312, ylabel= 'Absolute price oscillator')
-# AAA_price['EMA_fMACD'].plot(ax=ax2, lw=2 , color = 'g', legend = True)
+AAA_price['EMA_fMACD'].plot(ax=ax2, lw=2 , color = 'g', legend = True)
 AAA_price['EMA_sMACD'].plot(ax=ax2, lw=2 , color = 'b', legend = True)
 AAA_price['MACD'].plot(ax = ax2, lw= 2 , color= 'black', legend= True)
 plt.axhline( linewidth=2,color='b',y= 0,linestyle=':')
 ax3 = fig.add_subplot(313, ylabel= 'MACD hist')
-AAA_price['MACD_lv2_hist'].plot(ax = ax3, lw = 2, color = 'r', legend = True)
+AAA_price['MACD_hist'].plot(ax = ax3, lw = 2, color = 'r', legend = True)
 plt.axhline( linewidth=2,color='b',y= 0,linestyle=':')
 plt.show()
+MACD
