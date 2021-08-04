@@ -5,13 +5,19 @@ import numpy as np
 import os
 os.chdir('D:/data-vietquant/daily')
 
-
-AAA = pd.read_csv("HT1.csv")
+#CTG
+#HPG
+#AAA
+#HT1
+#BID
+#VIC
+#NVL
+AAA = pd.read_csv("BID.csv")
 AAA['Date'] = [i.split(' ')[0][:] for i in AAA['Date']]
 AAA['Date'] = AAA['Date'].apply(pd.Timestamp) #very important: convert string to date
 
 AAA = AAA.set_index(['Date'], inplace = False)
-start_date = '2020-01-01'
+start_date = '2017-01-01'
 end_date = '2021-07-30'
 
 AAA_data = AAA[start_date: (end_date)]
@@ -113,7 +119,7 @@ plt.show()
 
 #building FAST AND SLOW EMA
 #FAST EMA:
-fast_num = 20
+fast_num = 30
 mu_fast = 2/(fast_num+1)
 EMA_fast_list = []
 old_fast_EMA = 0
@@ -128,7 +134,7 @@ old_slow_EMA = 0
 MACD_list = []
 
 #EMA_MACD_fast:
-EMA_fMACD_num = 15
+EMA_fMACD_num = 12
 mu_fMACD = 2 / (EMA_fMACD_num + 1)
 EMA_fMACD_list = []
 EMA_fMACD_value = 0
