@@ -12,7 +12,7 @@ os.chdir('D:/data-vietquant/daily')
 #BID
 #VIC
 #NVL
-AAA = pd.read_csv("BID.csv")
+AAA = pd.read_csv("HT1.csv")
 AAA['Date'] = [i.split(' ')[0][:] for i in AAA['Date']]
 AAA['Date'] = AAA['Date'].apply(pd.Timestamp) #very important: convert string to date
 
@@ -20,7 +20,7 @@ AAA = AAA.set_index(['Date'], inplace = False)
 start_date = '2017-01-01'
 end_date = '2021-07-30'
 
-AAA_data = AAA[start_date: (end_date)]
+AAA_data = AAA[start_date:]
 print(AAA_data[10:20])
 
 Lows = AAA_data['Low']
@@ -107,6 +107,7 @@ ax1 = fig.add_subplot(111,  ylabel = "AAA price")
 AAA_signal['sup'].plot(lw=2, color='g')
 AAA_signal['res'].plot(lw=2 , color = 'b')
 AAA_signal['Price'].plot(lw=2 , color = 'r')
+# print(AAA_signal['position'])
 ax1.plot(AAA_signal.loc[AAA_signal.position == 1].index\
         ,AAA_signal.Price[AAA_signal.position == 1], '^', markersize = 7, label= 'buy' )
 
@@ -134,7 +135,7 @@ old_slow_EMA = 0
 MACD_list = []
 
 #EMA_MACD_fast:
-EMA_fMACD_num = 12
+EMA_fMACD_num = 10
 mu_fMACD = 2 / (EMA_fMACD_num + 1)
 EMA_fMACD_list = []
 EMA_fMACD_value = 0
@@ -237,6 +238,7 @@ def EMA_MACD_algorithm(data):
 
 
 EMA_MACD_algorithm(AAA_price)
+print(AAA_price['short_position'][-50:])
 # print(AAA_price['2021-01-20':'2021-01-25'])
 fig = plt.figure()
 ax1 = fig.add_subplot(311, ylabel = 'AAA prices')
